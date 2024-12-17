@@ -1,0 +1,43 @@
+import hashlib
+import binascii
+
+def public_key_to_uncompressed_address(public_key_hex):
+    # Convert the hex public key to bytes
+    public_key_bytes = binascii.unhexlify(public_key_hex)
+
+    # Perform SHA256 hashing on the public key
+    sha256_hash = hashlib.sha256(public_key_bytes).digest()
+
+    # Perform RIPEMD160 hashing on the SHA256 hash
+    ripemd160_hash = hashlib.new('ripemd160', sha256_hash).digest()
+
+    # Add version byte (0x00 for mainnet)
+    versioned_payload = b'\x00' + ripemd160_hash
+
+    # Perform SHA256 hashing twice to get the checksum
+    checksum = hashlib.sha256(hashlib.sha256(versioned_payload).digest()).digest()[:4]
+
+    # Create the final address
+    address_bytes = versioned_payload + checksum
+    address = base58_encode(address_bytes)
+
+    return address
+
+def base58_encode(b):
+    """Encode bytes to Base58."""
+    alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+    num = int.from_bytes(b, 'big')
+    result = ''
+    while num > 0:
+        num, rem = divmod(num, 58)
+        result = alphabet[rem] + result
+    # Add leading zeros
+    for byte in b:
+        if byte == 0:
+            result = alphabet[0] + result
+        else:
+            break
+    return result
+
+# Example usage
+public_key_hex = '04b0bd634234abbb1ba1e986e884185c0d1f1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1e1b1c1
